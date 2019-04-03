@@ -1,0 +1,3 @@
+boto3==1.9.127
+requests==2.21.0
+git+https://github.com/epidemicsound/pyeslog.git#egg=pyeslog
