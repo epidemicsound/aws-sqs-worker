@@ -7,14 +7,16 @@ import gc
 from util.request_client import Client
 
 
+QUEUE_SERVICE_HOST = os.getenv('QUEUE_SERVICE_HOST')
+INTERVAL = int(os.getenv('INTERVAL', 10))
+
+
 class QueueServiceWorker:
     def __init__(self, queue_name, handler, logger):
         self.queue_name = queue_name
         self.handler = handler
         self.logger = logger
-        self.client = Client(
-            os.getenv('QUEUE_SERVICE_HOST')
-        )
+        self.client = Client(QUEUE_SERVICE_HOST)
 
         self.run = True
         signal.signal(signal.SIGINT, self._handle_kill)
@@ -27,13 +29,13 @@ class QueueServiceWorker:
         self.run = False
 
     def _get_message(self):
-        return self.client.get("/get?queue={}".format(self.queue_name))
+        return self.client.get('/get?queue={}'.format(self.queue_name))
 
     def _delete_message(self, id):
         return self.client.delete(
-            "/delete", {
-                "queue": self.queue_name,
-                "id": id
+            '/delete', {
+                'queue': self.queue_name,
+                'id': id
             }
         )
 
@@ -44,7 +46,7 @@ class QueueServiceWorker:
 
             message_receive_time = time.time()
             if message.status_code == 200:
-                id = response["id"]
+                id = response['id']
                 payload = response['payload']
                 self.handler(payload)
                 self._delete_message(id)
@@ -52,31 +54,31 @@ class QueueServiceWorker:
                 process_time = time.time() - message_receive_time
                 if process_time > 15*60:
                     self.logger.error(
-                        "Queue message took too long to process",
+                        'Queue message took too long to process',
                         type=payload.get('type', 'not set'),
                         queue=self.queue_name,
                         process_time=process_time,
                     )
                 else:
                     self.logger.info(
-                        "Queue message processed",
+                        'Queue message processed',
                         type=payload.get('type', 'not set'),
                         queue=self.queue_name,
                         process_time=process_time,
                     )
 
             else:
-                message_type = response["type"]
-                if message_type == "NO_MESSAGES_ON_QUEUE":
-                    self.logger.info("No messages in queue, sleeping for 10s")
-                    time.sleep(10)
+                message_type = response['type']
+                if message_type == 'NO_MESSAGES_ON_QUEUE':
+                    self.logger.info(f'No messages in queue, sleeping for {INTERVAL}s')
+                    time.sleep(INTERVAL)
                 else:
-                    raise Exception("Unhandled error {}", message_type)
+                    raise Exception('Unhandled error {}', message_type)
 
             self.working_loops += 1
             if self.working_loops % 1000 == 0:
                 # Trigger GC to clean up before hard memory limit is triggered
-                self.logger.info("Invoking garbage collect", loop=self.working_loops)
+                self.logger.info('Invoking garbage collect', loop=self.working_loops)
                 gc.collect()
 
         self.logger.info('Work loop exited')

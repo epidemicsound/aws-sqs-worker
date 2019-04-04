@@ -23,7 +23,7 @@ def make_post(path, data, headers={}):
 
 
 def make_post_json(path, data, headers={}):
-    headers['Content-type'] = 'application/json'
+    headers['Content-Type'] = 'application/json'
     return make_post(path, json.dumps(data), headers)
 
 
