@@ -48,23 +48,27 @@ class QueueServiceWorker:
                 if process_time > 15*60:
                     self.logger.error(
                         'Queue message took too long to process',
-                        type=payload.get('type', 'not set'),
-                        queue=self.queue_name,
-                        process_time=process_time,
+                        extra=dict(
+                            type=payload.get('type', 'not set'),
+                            queue=self.queue_name,
+                            process_time=process_time,
+                        )
                     )
                 else:
                     self.logger.info(
                         'Queue message processed',
-                        type=payload.get('type', 'not set'),
-                        queue=self.queue_name,
-                        process_time=process_time,
+                        extra=dict(
+                            type=payload.get('type', 'not set'),
+                            queue=self.queue_name,
+                            process_time=process_time,
+                        )
                     )
 
             else:
                 message_type = response['type']
                 if message_type == 'NO_MESSAGES_ON_QUEUE':
-                    self.logger.info(f'No messages in queue, sleeping for \
-                            {settings.NO_MESSAGES_SLEEP_INTERVAL}s')
+                    self.logger.info('No messages in queue, sleeping for %ss',
+                                     settings.NO_MESSAGE_SLEEP_INTERVAL)
                     time.sleep(settings.NO_MESSAGE_SLEEP_INTERVAL)
                 else:
                     raise Exception('Unhandled error {}', message_type)
@@ -78,9 +82,11 @@ class QueueServiceWorker:
             restart_delay = 1
             self.logger.error(
                 'Worker crashed, restarting in {}s'.format(restart_delay),
-                exception_type=type(e),
-                exception=str(e),
-                traceback=traceback.format_exc()
+                extra=dict(
+                    exception_type=type(e),
+                    exception=str(e),
+                    traceback=traceback.format_exc()
+                )
             )
             time.sleep(restart_delay)
             self.start()
