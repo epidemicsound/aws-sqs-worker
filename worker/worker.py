@@ -1,7 +1,6 @@
 import time
 import traceback
 import signal
-import gc
 
 import settings
 from request_client import Client
@@ -17,8 +16,6 @@ class QueueServiceWorker:
         self.run = True
         signal.signal(signal.SIGINT, self._handle_kill)
         signal.signal(signal.SIGTERM, self._handle_kill)
-
-        self.working_loops = 0
 
     def _handle_kill(self, signum, frame):
         self.logger.info('Got kill signal, stopping run...')
@@ -71,12 +68,6 @@ class QueueServiceWorker:
                     time.sleep(settings.NO_MESSAGE_SLEEP_INTERVAL)
                 else:
                     raise Exception('Unhandled error {}', message_type)
-
-            self.working_loops += 1
-            if self.working_loops % 1000 == 0:
-                # Trigger GC to clean up before hard memory limit is triggered
-                self.logger.info('Invoking garbage collect', loop=self.working_loops)
-                gc.collect()
 
         self.logger.info('Work loop exited')
 
