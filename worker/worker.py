@@ -1,14 +1,10 @@
-import os
 import time
 import traceback
 import signal
 import gc
 
-from util.request_client import Client
-
-
-QUEUE_SERVICE_HOST = os.getenv('QUEUE_SERVICE_HOST')
-INTERVAL = int(os.getenv('INTERVAL', 10))
+import settings
+from request_client import Client
 
 
 class QueueServiceWorker:
@@ -16,7 +12,7 @@ class QueueServiceWorker:
         self.queue_name = queue_name
         self.handler = handler
         self.logger = logger
-        self.client = Client(QUEUE_SERVICE_HOST)
+        self.client = Client(settings.QUEUE_SERVICE_HOST)
 
         self.run = True
         signal.signal(signal.SIGINT, self._handle_kill)
@@ -70,8 +66,9 @@ class QueueServiceWorker:
             else:
                 message_type = response['type']
                 if message_type == 'NO_MESSAGES_ON_QUEUE':
-                    self.logger.info(f'No messages in queue, sleeping for {INTERVAL}s')
-                    time.sleep(INTERVAL)
+                    self.logger.info(f'No messages in queue, sleeping for \
+                            {settings.NO_MESSAGES_SLEEP_INTERVAL}s')
+                    time.sleep(settings.NO_MESSAGE_SLEEP_INTERVAL)
                 else:
                     raise Exception('Unhandled error {}', message_type)
 
