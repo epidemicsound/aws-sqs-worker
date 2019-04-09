@@ -1,7 +1,16 @@
 # aws-sqs-worker
 This repository represents worker interaction with Amazon SQS. A worker encapsulates a piece of code written to perform a specific task. In this model, the worker receives the task to perform in form of a message from a queue. This is a very common form of architecture where the sender gets decoupled from the worker through an asynchronous messaging queue.
 
-This module exposes the necessary API to create a worker which starts polling messages from a specific queue in Amazon SQS. Steps necessary to create a worker for the process:
+This module exposes the necessary API to create a worker which starts polling messages from a specific queue in Amazon SQS.
+
+## Installation:
+We can install the library through github by writing the dependency in `requirements.txt` as:
+
+```
+git+https://github.com/epidemicsound/aws-sqs-worker.git#egg=aws-sqs-worker
+```
+
+## Steps necessary to create a worker for the process:
 
 1. Create a worker class with a method to handle the payload from the queue that the worker is created for. An example is as follows:
 
