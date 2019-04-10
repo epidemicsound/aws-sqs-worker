@@ -2,8 +2,10 @@ import time
 import traceback
 import signal
 
-import settings
-from request_client import Client
+from . import (
+    request_client,
+    settings
+)
 
 
 class QueueServiceWorker:
@@ -11,7 +13,7 @@ class QueueServiceWorker:
         self.queue_name = queue_name
         self.handler = handler
         self.logger = logger
-        self.client = Client(settings.QUEUE_SERVICE_HOST)
+        self.client = request_client.Client(settings.QUEUE_SERVICE_HOST)
 
         self.run = True
         signal.signal(signal.SIGINT, self._handle_kill)
