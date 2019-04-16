@@ -69,8 +69,8 @@ class QueueServiceWorker:
             else:
                 message_type = response['type']
                 if message_type == 'NO_MESSAGES_ON_QUEUE':
-                    self.logger.info('No messages in queue, sleeping for %ss',
-                                     settings.NO_MESSAGE_SLEEP_INTERVAL)
+                    self.logger.info('No messages in queue, sleeping',
+                                     extra=dict(sleep=settings.NO_MESSAGE_SLEEP_INTERVAL))
                     time.sleep(settings.NO_MESSAGE_SLEEP_INTERVAL)
                 else:
                     raise Exception('Unhandled error {}', message_type)
