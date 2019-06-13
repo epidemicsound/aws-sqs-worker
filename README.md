@@ -7,8 +7,12 @@ This module exposes the necessary API to create a worker which starts polling me
 We can install the library through github by writing the dependency in `requirements.txt` as:
 
 ```
-git+https://github.com/epidemicsound/aws-sqs-worker.git#egg=aws-sqs-worker
+https://github.com/epidemicsound/aws-sqs-worker/releases/download/v0.0.1/aws_sqs_worker-0.0.1-py3-none-any.whl
 ```
+
+Replace 0.0.1 with the desired version, on both places in the url!
+
+If using pipenv, you can also run `pipenv install https://github.com/epidemicsound/aws-sqs-worker/releases/download/v0.0.1/aws_sqs_worker-0.0.1-py3-none-any.whl`.
 
 ## Steps necessary to create a worker for the process:
 
@@ -45,3 +49,18 @@ queue_worker.start()
 ```
 
 This will then start the queue polling mechanism by the `queue_worker`. As soon as message appears on the `queue_name`, it invokes the `handle_payload` function of `myworker` instance.
+
+## Release
+
+Use semantic versioning for this library. When bumping the version, please update the version in:
+
+* setup.py
+* this readme
+
+Merge into master.
+
+Generate a new wheel (after bumping the version and being on the new master) by running `make build-release`.
+
+Make sure that there is a new wheel named `aws_sqs_worker-<version>-py3-none-any.whl` and is in the `dist` folder.
+
+Create a github release and upload the wheel file to the release.
