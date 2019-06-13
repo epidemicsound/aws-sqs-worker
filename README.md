@@ -7,12 +7,12 @@ This module exposes the necessary API to create a worker which starts polling me
 We can install the library through github by writing the dependency in `requirements.txt` as:
 
 ```
-https://raw.githubusercontent.com/epidemicsound/aws-sqs-worker/master/wheels/aws_sqs_worker-0.0.1-py3-none-any.whl
+https://github.com/epidemicsound/aws-sqs-worker/releases/download/v0.0.1/aws_sqs_worker-0.0.1-py3-none-any.whl
 ```
 
-Replace 0.0.1 with the desired version!
+Replace 0.0.1 with the desired version, on both places in the url!
 
-If using pipenv, you can also run `pipenv install https://raw.githubusercontent.com/epidemicsound/aws-sqs-worker/master/wheels/aws_sqs_worker-0.0.1-py3-none-any.whl`.
+If using pipenv, you can also run `pipenv install https://github.com/epidemicsound/aws-sqs-worker/releases/download/v0.0.1/aws_sqs_worker-0.0.1-py3-none-any.whl`.
 
 ## Steps necessary to create a worker for the process:
 
@@ -57,8 +57,10 @@ Use semantic versioning for this library. When bumping the version, please updat
 * setup.py
 * this readme
 
-Make sure you generate a new wheel (after bumping the version) by running `make build-release`.
+Merge into master.
 
-Make sure that the new wheel is named `aws_sqs_worker-<version>-py3-none-any.whl` and is in the `wheels` folder..
+Generate a new wheel (after bumping the version and being on the new master) by running `make build-release`.
 
-Include the wheel in git.
+Make sure that there is a new wheel named `aws_sqs_worker-<version>-py3-none-any.whl` and is in the `dist` folder.
+
+Create a github release and upload the wheel file to the release.
