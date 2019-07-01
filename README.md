@@ -7,12 +7,12 @@ This module exposes the necessary API to create a worker which starts polling me
 We can install the library through github by writing the dependency in `requirements.txt` as:
 
 ```
-https://github.com/epidemicsound/aws-sqs-worker/releases/download/v0.0.1/aws_sqs_worker-0.0.1-py3-none-any.whl
+https://github.com/epidemicsound/aws-sqs-worker/releases/download/v0.0.2/aws_sqs_worker-0.0.2-py3-none-any.whl
 ```
 
-Replace 0.0.1 with the desired version, on both places in the url!
+Replace 0.0.2 with the desired version, on both places in the url!
 
-If using pipenv, you can also run `pipenv install https://github.com/epidemicsound/aws-sqs-worker/releases/download/v0.0.1/aws_sqs_worker-0.0.1-py3-none-any.whl`.
+If using pipenv, you can also run `pipenv install https://github.com/epidemicsound/aws-sqs-worker/releases/download/v0.0.2/aws_sqs_worker-0.0.2-py3-none-any.whl`.
 
 ## Steps necessary to create a worker for the process:
 
