@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setup(
     name='aws-sqs-worker',
-    version='0.0.1',
+    version='0.0.2',
     description='AWS SQS Worker Module',
     license='MIT',
     long_description=long_description,
