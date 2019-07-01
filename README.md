@@ -18,37 +18,64 @@ If using pipenv, you can also run `pipenv install https://github.com/epidemicsou
 
 1. Create a worker class with a method to handle the payload from the queue that the worker is created for. An example is as follows:
 
-```python
-class SpecificWorker(object):
-  
-  def __init__(self):
-    pass
-
-  def handle_payload(self, payload):
-    # code to handle the payload received from SQS
-
-```
+    ```python
+    class SpecificWorker(object):
+      
+      def __init__(self):
+        pass
+    
+      def handle_payload(self, payload):
+        # code to handle the payload received from SQS
+    
+    ```
 
 2. Once we have created our specific worker, we need to attach it to an instance of `QueueServiceWorker` which handles all the code of connecting to the queue and polling messages from the queue.
 
-```python
+    ```python
+   
+    import worker
+    
+    mylogger = logging.get_logger(__name__)
+    
+    myworker = SpecificWorker()
+    queue_name = 'queue_to_pull_messages_from'
+    
+    queue_worker = worker.QueueServiceWorker(
+      queue_name=queue_name,
+      logger=mylogger,
+      handler=myworker.handle_payload)
+    
+    queue_worker.start()
+    ```
 
+This will then start the queue polling mechanism by the `queue_worker`. As soon as message appears on the `queue_name`, it invokes the `handle_payload` function of `myworker` instance.
+
+#### Liveness callback
+As an option (as of v0.0.2) it is possible to add a liveless callback function to the worker.
+```python
 import worker
+from pathlib import Path
 
 mylogger = logging.get_logger(__name__)
 
 myworker = SpecificWorker()
 queue_name = 'queue_to_pull_messages_from'
+    
+def my_liveness_callback():
+    Path('/worker/alive.txt').touch()
 
 queue_worker = worker.QueueServiceWorker(
-  queue_name=queue_name,
-  logger=mylogger,
-  handler=myworker.handle_payload)
-
-queue_worker.start()
+    queue_name=queue_name,
+    logger=mylogger,
+    handler=myworker.handle_payload,
+    liveness_callback=my_liveness_callback
+)  
 ```
 
-This will then start the queue polling mechanism by the `queue_worker`. As soon as message appears on the `queue_name`, it invokes the `handle_payload` function of `myworker` instance.
+If added, the liveness callback will be triggered last in each of the workers cycles of checking and processing
+an available message in the connected queue. The liveness probe also triggers even if the connected queue happens
+to be empty. In this case the liveness probe will be triggered after the `NO_MESSAGE_SLEEP_INTERVAL`, just before a 
+new cycle of checking and processing messages in the queue begins. 
 
 ## Release
 
