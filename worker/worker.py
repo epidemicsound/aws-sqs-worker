@@ -9,7 +9,7 @@ from . import (
 
 
 class QueueServiceWorker:
-    def __init__(self, queue_name, handler, logger, liveness_callback):
+    def __init__(self, queue_name, handler, logger, liveness_callback=None):
         self.queue_name = queue_name
         self.handler = handler
         self.logger = logger
