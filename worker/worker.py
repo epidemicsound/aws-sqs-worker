@@ -13,6 +13,10 @@ class QueueServiceWorker:
         self.queue_name = queue_name
         self.handler = handler
         self.logger = logger
+
+        if settings.QUEUE_SERVICE_HOST is None:
+            raise Exception("aws-sqs-worker is missing a 'QUEUE_SERVICE_HOST' environment variable")
+
         self.client = request_client.Client(settings.QUEUE_SERVICE_HOST)
 
         self.run = True
