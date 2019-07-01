@@ -9,10 +9,11 @@ from . import (
 
 
 class QueueServiceWorker:
-    def __init__(self, queue_name, handler, logger):
+    def __init__(self, queue_name, handler, logger, liveness_callback):
         self.queue_name = queue_name
         self.handler = handler
         self.logger = logger
+        self.liveness_callback = liveness_callback
 
         if settings.QUEUE_SERVICE_HOST is None:
             raise Exception("aws-sqs-worker is missing a 'QUEUE_SERVICE_HOST' environment variable")
@@ -78,6 +79,9 @@ class QueueServiceWorker:
                     time.sleep(settings.NO_MESSAGE_SLEEP_INTERVAL)
                 else:
                     raise Exception('Unhandled error {}', message_type)
+
+            if self.liveness_callback is not None:
+                self.liveness_callback()
 
         self.logger.info('Work loop exited')
 
