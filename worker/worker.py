@@ -1,6 +1,9 @@
+import asyncio
 import time
 import traceback
 import signal
+
+import aiohttp
 
 from . import request_client, settings
 
@@ -17,7 +20,14 @@ class QueueServiceWorker:
                 "aws-sqs-worker is missing a 'QUEUE_SERVICE_HOST' environment variable"
             )
 
-        self.client = request_client.Client(settings.QUEUE_SERVICE_HOST)
+        self.async_ = asyncio.iscoroutinefunction(handler)
+
+        self.client = (
+            request_client.Client(settings.QUEUE_SERVICE_HOST)
+            if not self.async_
+            else None
+        )
+        self.aiohttp_session = aiohttp.ClientSession() if self.async_ else None
 
         self.run = True
         signal.signal(signal.SIGINT, self._handle_kill)
@@ -27,12 +37,13 @@ class QueueServiceWorker:
         self.logger.info("Got kill signal, stopping run...")
         self.run = False
 
-    def _get_queue_message(self):
-        """Retrieves a queue message or None. May block for a long time."""
-        response = self.client.get("/get?queue={}".format(self.queue_name))
-        response_data = response.json()
+    async def _get_queue_message(self):
+        response = await self.aiohttp_session.get(
+            settings.QUEUE_SERVICE_HOST + "/get", params={"queue": self.queue_name}
+        )
+        response_data = await response.json()
 
-        if response.status_code == 200:
+        if response.status == 200:
             return response_data
         else:
             message_type = response_data["type"]
@@ -41,33 +52,41 @@ class QueueServiceWorker:
                     "No messages in queue, sleeping",
                     extra=dict(sleep=settings.NO_MESSAGE_SLEEP_INTERVAL),
                 )
-                time.sleep(settings.NO_MESSAGE_SLEEP_INTERVAL)
+                await asyncio.sleep(settings.NO_MESSAGE_SLEEP_INTERVAL)
             else:
                 raise Exception("Unhandled error {}", message_type)
 
-    def _delete_message(self, id):
-        return self.client.delete("/delete", {"queue": self.queue_name, "id": id})
+    async def _delete_message(self, id):
+        await self.aiohttp_session.delete(
+            settings.QUEUE_SERVICE_HOST + "/delete",
+            params={"queue": self.queue_name, "id": id},
+        )
 
-    def _work(self):
+    async def _work(self):
         while self.run:
-            response_data = self._get_queue_message()
+            response_data = await self._get_queue_message()
             if response_data is not None:
-                self._handle_queue_message(response_data)
+                await self._handle_queue_message(response_data)
 
             if self.liveness_callback is not None:
                 self.liveness_callback()
 
         self.logger.info("Work loop exited")
 
-    def _handle_queue_message(self, response_data):
+    async def _handle_queue_message(self, response_data):
         message_receive_time = time.time()
 
-        id = response_data["id"]
         payload = response_data["payload"]
-        self.handler(payload)
-        self._delete_message(id)
+        if self.async_:
+            await self.handler(payload)
+        else:
+            # todo: this will run a slow sync method in the event loop, the event loop might complain.
+            # todo: consider moving it into a thread.
+            self.handler(payload)
 
         process_time = time.time() - message_receive_time
+        await self._delete_message(response_data["id"])
+
         if process_time > 15 * 60:
             self.logger.error(
                 "Queue message took too long to process",
@@ -88,17 +107,21 @@ class QueueServiceWorker:
             )
 
     def start(self):
-        try:
-            self._work()
-        except Exception as e:
-            restart_delay = 1
-            self.logger.error(
-                "Worker crashed, restarting in {}s".format(restart_delay),
-                extra=dict(
-                    exception_type=type(e),
-                    exception=str(e),
-                    traceback=traceback.format_exc(),
-                ),
-            )
-            time.sleep(restart_delay)
-            self.start()
+        while True:
+            try:
+                asyncio.run(self._work())
+            # todo: an exception in an async task probably shouldn't kill the work loop without awaiting the
+            # pending tasks
+            except Exception as e:
+                restart_delay = 1
+                self.logger.error(
+                    "Worker crashed, restarting in {}s".format(restart_delay),
+                    extra=dict(
+                        exception_type=type(e),
+                        exception=str(e),
+                        traceback=traceback.format_exc(),
+                    ),
+                )
+                time.sleep(restart_delay)
+            else:
+                return

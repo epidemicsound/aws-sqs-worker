@@ -11,5 +11,5 @@ setup(
     long_description=long_description,
     url='https://github.com/epidemicsound/aws-sqs-worker.git',
     packages=['worker'],
-    install_requires=['requests']
+    install_requires=['requests', 'aiohttp']
 )
