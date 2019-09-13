@@ -41,13 +41,13 @@ class QueueServiceWorker:
 
     def _work(self):
         while self.run:
-            message = self._get_message()
-            response = message.json()
+            response = self._get_message()
+            response_data = response.json()
 
-            if message.status_code == 200:
-                self._handle_queue_message(response)
+            if response.status_code == 200:
+                self._handle_queue_message(response_data)
             else:
-                message_type = response['type']
+                message_type = response_data['type']
                 if message_type == 'NO_MESSAGES_ON_QUEUE':
                     self.logger.info('No messages in queue, sleeping',
                                      extra=dict(sleep=settings.NO_MESSAGE_SLEEP_INTERVAL))
@@ -60,11 +60,11 @@ class QueueServiceWorker:
 
         self.logger.info('Work loop exited')
 
-    def _handle_queue_message(self, message):
+    def _handle_queue_message(self, response_data):
         message_receive_time = time.time()
 
-        id = message['id']
-        payload = message['payload']
+        id = response_data['id']
+        payload = response_data['payload']
         self.handler(payload)
         self._delete_message(id)
 
