@@ -23,7 +23,7 @@ class QueueServiceWorker:
         self.async_ = asyncio.iscoroutinefunction(handler)
 
         self.client = request_client.Client(settings.QUEUE_SERVICE_HOST)
-        self.aiohttp_session = aiohttp.ClientSession()
+        self.aiohttp_session = None
 
         self.run = True
         signal.signal(signal.SIGINT, self._handle_kill)
@@ -60,15 +60,21 @@ class QueueServiceWorker:
             return
 
     async def _work(self):
-        while self.run:
-            response_data = await self._get_queue_message()
-            if response_data is not None:
-                await self._handle_queue_message(response_data)
+        self.aiohttp_session = aiohttp.ClientSession()
+        try:
+            while self.run:
+                response_data = await self._get_queue_message()
+                if response_data is not None:
+                    await self._handle_queue_message(response_data)
 
-            if self.liveness_callback is not None:
-                self.liveness_callback()
+                if self.liveness_callback is not None:
+                    self.liveness_callback()
 
-        self.logger.info("Work loop exited")
+            self.logger.info("Work loop exited")
+        finally:
+            await self.aiohttp_session.close()
+            self.aiohttp_session = None
+
 
     async def _handle_queue_message(self, response_data):
         message_receive_time = time.time()
