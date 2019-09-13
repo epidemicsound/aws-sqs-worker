@@ -22,12 +22,8 @@ class QueueServiceWorker:
 
         self.async_ = asyncio.iscoroutinefunction(handler)
 
-        self.client = (
-            request_client.Client(settings.QUEUE_SERVICE_HOST)
-            if not self.async_
-            else None
-        )
-        self.aiohttp_session = aiohttp.ClientSession() if self.async_ else None
+        self.client = request_client.Client(settings.QUEUE_SERVICE_HOST)
+        self.aiohttp_session = aiohttp.ClientSession()
 
         self.run = True
         signal.signal(signal.SIGINT, self._handle_kill)
