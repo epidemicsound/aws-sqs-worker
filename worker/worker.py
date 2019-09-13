@@ -37,6 +37,7 @@ class QueueServiceWorker:
         async with self.aiohttp_session.get(
             settings.QUEUE_SERVICE_HOST + "/get", params={"queue": self.queue_name}
         ) as response:
+            print(await response.text())
             response_data = await response.json()
 
             if response.status == 200:
