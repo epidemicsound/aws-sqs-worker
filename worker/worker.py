@@ -62,10 +62,19 @@ class QueueServiceWorker:
     async def _work(self):
         self.aiohttp_session = aiohttp.ClientSession()
         try:
+            tasks = set()
+
             while self.run:
                 response_data = await self._get_queue_message()
                 if response_data is not None:
-                    await self._handle_queue_message(response_data)
+                    task = asyncio.create_task(
+                        self._handle_queue_message(response_data)
+                    )
+                    tasks.add(task)
+                    task.add_done_callback(tasks.remove)
+
+                while len(tasks) > 10:
+                    await asyncio.sleep(0.1)
 
                 if self.liveness_callback is not None:
                     self.liveness_callback()
@@ -74,7 +83,6 @@ class QueueServiceWorker:
         finally:
             await self.aiohttp_session.close()
             self.aiohttp_session = None
-
 
     async def _handle_queue_message(self, response_data):
         message_receive_time = time.time()
