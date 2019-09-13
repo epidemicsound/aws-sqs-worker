@@ -1,11 +1,12 @@
 import asyncio
+import json
 import time
 import traceback
 import signal
 
 import aiohttp
 
-from . import request_client, settings
+from . import settings
 
 
 class QueueServiceWorker:
@@ -22,7 +23,6 @@ class QueueServiceWorker:
 
         self.async_ = asyncio.iscoroutinefunction(handler)
 
-        self.client = request_client.Client(settings.QUEUE_SERVICE_HOST)
         self.aiohttp_session = None
 
         self.run = True
@@ -37,8 +37,9 @@ class QueueServiceWorker:
         async with self.aiohttp_session.get(
             settings.QUEUE_SERVICE_HOST + "/get", params={"queue": self.queue_name}
         ) as response:
-            print(await response.text())
-            response_data = await response.json()
+            # response_data = await response.json()
+            # the queue service sends it's response for empty queues with the wrong content-type, let's assume json
+            response_data = json.loads(await response.text())
 
             if response.status == 200:
                 return response_data
