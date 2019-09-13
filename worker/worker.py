@@ -28,8 +28,21 @@ class QueueServiceWorker:
         self.logger.info('Got kill signal, stopping run...')
         self.run = False
 
-    def _get_message(self):
-        return self.client.get('/get?queue={}'.format(self.queue_name))
+    def _get_queue_message(self):
+        """Retrieves a queue message or None. May block for a long time."""
+        response = self.client.get('/get?queue={}'.format(self.queue_name))
+        response_data = response.json()
+
+        if response.status_code == 200:
+            return response_data
+        else:
+            message_type = response_data['type']
+            if message_type == 'NO_MESSAGES_ON_QUEUE':
+                self.logger.info('No messages in queue, sleeping',
+                                 extra=dict(sleep=settings.NO_MESSAGE_SLEEP_INTERVAL))
+                time.sleep(settings.NO_MESSAGE_SLEEP_INTERVAL)
+            else:
+                raise Exception('Unhandled error {}', message_type)
 
     def _delete_message(self, id):
         return self.client.delete(
@@ -41,19 +54,9 @@ class QueueServiceWorker:
 
     def _work(self):
         while self.run:
-            response = self._get_message()
-            response_data = response.json()
-
-            if response.status_code == 200:
+            response_data = self._get_queue_message()
+            if response_data is not None:
                 self._handle_queue_message(response_data)
-            else:
-                message_type = response_data['type']
-                if message_type == 'NO_MESSAGES_ON_QUEUE':
-                    self.logger.info('No messages in queue, sleeping',
-                                     extra=dict(sleep=settings.NO_MESSAGE_SLEEP_INTERVAL))
-                    time.sleep(settings.NO_MESSAGE_SLEEP_INTERVAL)
-                else:
-                    raise Exception('Unhandled error {}', message_type)
 
             if self.liveness_callback is not None:
                 self.liveness_callback()
