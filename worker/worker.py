@@ -34,29 +34,30 @@ class QueueServiceWorker:
         self.run = False
 
     async def _get_queue_message(self):
-        response = await self.aiohttp_session.get(
+        async with self.aiohttp_session.get(
             settings.QUEUE_SERVICE_HOST + "/get", params={"queue": self.queue_name}
-        )
-        response_data = await response.json()
+        ) as response:
+            response_data = await response.json()
 
-        if response.status == 200:
-            return response_data
-        else:
-            message_type = response_data["type"]
-            if message_type == "NO_MESSAGES_ON_QUEUE":
-                self.logger.info(
-                    "No messages in queue, sleeping",
-                    extra=dict(sleep=settings.NO_MESSAGE_SLEEP_INTERVAL),
-                )
-                await asyncio.sleep(settings.NO_MESSAGE_SLEEP_INTERVAL)
+            if response.status == 200:
+                return response_data
             else:
-                raise Exception("Unhandled error {}", message_type)
+                message_type = response_data["type"]
+                if message_type == "NO_MESSAGES_ON_QUEUE":
+                    self.logger.info(
+                        "No messages in queue, sleeping",
+                        extra=dict(sleep=settings.NO_MESSAGE_SLEEP_INTERVAL),
+                    )
+                    await asyncio.sleep(settings.NO_MESSAGE_SLEEP_INTERVAL)
+                else:
+                    raise Exception("Unhandled error {}", message_type)
 
     async def _delete_message(self, id):
-        await self.aiohttp_session.delete(
+        async with self.aiohttp_session.delete(
             settings.QUEUE_SERVICE_HOST + "/delete",
             params={"queue": self.queue_name, "id": id},
-        )
+        ):
+            return
 
     async def _work(self):
         while self.run:
