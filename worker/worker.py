@@ -44,33 +44,8 @@ class QueueServiceWorker:
             message = self._get_message()
             response = message.json()
 
-            message_receive_time = time.time()
             if message.status_code == 200:
-                id = response['id']
-                payload = response['payload']
-                self.handler(payload)
-                self._delete_message(id)
-
-                process_time = time.time() - message_receive_time
-                if process_time > 15*60:
-                    self.logger.error(
-                        'Queue message took too long to process',
-                        extra=dict(
-                            type=payload.get('type', 'not set'),
-                            queue=self.queue_name,
-                            process_time=process_time,
-                        )
-                    )
-                else:
-                    self.logger.info(
-                        'Queue message processed',
-                        extra=dict(
-                            type=payload.get('type', 'not set'),
-                            queue=self.queue_name,
-                            process_time=process_time,
-                        )
-                    )
-
+                self._handle_queue_message(response)
             else:
                 message_type = response['type']
                 if message_type == 'NO_MESSAGES_ON_QUEUE':
@@ -84,6 +59,35 @@ class QueueServiceWorker:
                 self.liveness_callback()
 
         self.logger.info('Work loop exited')
+
+    def _handle_queue_message(self, message):
+        message_receive_time = time.time()
+
+        id = message['id']
+        payload = message['payload']
+        self.handler(payload)
+        self._delete_message(id)
+
+        process_time = time.time() - message_receive_time
+        if process_time > 15 * 60:
+            self.logger.error(
+                'Queue message took too long to process',
+                extra=dict(
+                    type=payload.get('type', 'not set'),
+                    queue=self.queue_name,
+                    process_time=process_time,
+                )
+            )
+        else:
+            self.logger.info(
+                'Queue message processed',
+                extra=dict(
+                    type=payload.get('type', 'not set'),
+                    queue=self.queue_name,
+                    process_time=process_time,
+                )
+            )
+
 
     def start(self):
         try:
