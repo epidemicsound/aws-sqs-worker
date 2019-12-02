@@ -24,33 +24,38 @@ def requests_retry_session(
 
 
 class Client:
-    def __init__(self, base_url, default_headers={}):
+    def __init__(self, base_url, default_headers={}, timeout=None):
         self.base_url = base_url
         self.default_headers = default_headers
+        self.timeout = self.timeout
 
     def get(self, path):
         return requests_retry_session().get(
             url='{}{}'.format(self.base_url, path),
-            headers=self.default_headers
+            headers=self.default_headers,
+            timeout=self.timeout
         )
 
     def post(self, path, json):
         return requests_retry_session().post(
             url='{}{}'.format(self.base_url, path),
             json=json,
-            headers=self.default_headers
+            headers=self.default_headers,
+            timeout=self.timeout
         )
 
     def put(self, path, json):
         return requests_retry_session().put(
             url='{}{}'.format(self.base_url, path),
             json=json,
-            headers=self.default_headers
+            headers=self.default_headers,
+            timeout=self.timeout
         )
 
     def delete(self, path, json):
         return requests_retry_session().delete(
             url='{}{}'.format(self.base_url, path),
             json=json,
-            headers=self.default_headers
+            headers=self.default_headers,
+            timeout=self.timeout
         )
