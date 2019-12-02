@@ -9,16 +9,20 @@ from . import (
 
 
 class QueueServiceWorker:
-    def __init__(self, queue_name, handler, logger, liveness_callback=None):
+    def __init__(self, queue_name, handler, logger, liveness_callback=None, request_timeout=None):
         self.queue_name = queue_name
         self.handler = handler
         self.logger = logger
         self.liveness_callback = liveness_callback
+        self.request_timeout = request_timeout
 
         if settings.QUEUE_SERVICE_HOST is None:
             raise Exception("aws-sqs-worker is missing a 'QUEUE_SERVICE_HOST' environment variable")
 
-        self.client = request_client.Client(settings.QUEUE_SERVICE_HOST)
+        self.client = request_client.Client(
+            settings.QUEUE_SERVICE_HOST,
+            timeout=self.request_timeout
+        )
 
         self.run = True
         signal.signal(signal.SIGINT, self._handle_kill)
