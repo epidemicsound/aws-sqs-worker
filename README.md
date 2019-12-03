@@ -20,31 +20,31 @@ If using pipenv, you can also run `pipenv install https://github.com/epidemicsou
 
     ```python
     class SpecificWorker(object):
-      
+
       def __init__(self):
         pass
-    
+
       def handle_payload(self, payload):
         # code to handle the payload received from SQS
-    
+
     ```
 
 2. Once we have created our specific worker, we need to attach it to an instance of `QueueServiceWorker` which handles all the code of connecting to the queue and polling messages from the queue.
 
     ```python
-   
+
     import worker
-    
+
     mylogger = logging.get_logger(__name__)
-    
+
     myworker = SpecificWorker()
     queue_name = 'queue_to_pull_messages_from'
-    
+
     queue_worker = worker.QueueServiceWorker(
       queue_name=queue_name,
       logger=mylogger,
       handler=myworker.handle_payload)
-    
+
     queue_worker.start()
     ```
 
@@ -60,7 +60,7 @@ mylogger = logging.get_logger(__name__)
 
 myworker = SpecificWorker()
 queue_name = 'queue_to_pull_messages_from'
-    
+
 def my_liveness_callback():
     Path('/worker/alive.txt').touch()
 
@@ -69,13 +69,13 @@ queue_worker = worker.QueueServiceWorker(
     logger=mylogger,
     handler=myworker.handle_payload,
     liveness_callback=my_liveness_callback
-)  
+)
 ```
 
 If added, the liveness callback will be triggered last in each of the workers cycles of checking and processing
 an available message in the connected queue. The liveness probe also triggers even if the connected queue happens
-to be empty. In this case the liveness probe will be triggered after the `NO_MESSAGE_SLEEP_INTERVAL`, just before a 
-new cycle of checking and processing messages in the queue begins. 
+to be empty. In this case the liveness probe will be triggered after the `NO_MESSAGE_SLEEP_INTERVAL`, just before a
+new cycle of checking and processing messages in the queue begins.
 
 #### Timeout
 
@@ -89,7 +89,7 @@ mylogger = logging.get_logger(__name__)
 
 myworker = SpecificWorker()
 queue_name = 'queue_to_pull_messages_from'
-    
+
 def my_liveness_callback():
     Path('/worker/alive.txt').touch()
 
@@ -99,10 +99,10 @@ queue_worker = worker.QueueServiceWorker(
     handler=myworker.handle_payload,
     liveness_callback=my_liveness_callback
     timeout=(12, 36)
-)  
+)
 ```
 
-Timeout value will cause requests to give timeout if they're not completed in given (connection_timeout, read_timeout). By 
+Timeout value will cause requests to give timeout if they're not completed in given (connection_timeout, read_timeout). By
 this way your worker will raise a connection exception in case of unhealthy host behavior.
 
 ## Release

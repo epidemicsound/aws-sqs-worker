@@ -24,10 +24,10 @@ def requests_retry_session(
 
 
 class Client:
-    def __init__(self, base_url, default_headers={}, timeout=None):
+    def __init__(self, base_url, timeout, default_headers={}):
         self.base_url = base_url
         self.default_headers = default_headers
-        self.timeout = self.timeout
+        self.timeout = timeout
 
     def get(self, path):
         return requests_retry_session().get(
