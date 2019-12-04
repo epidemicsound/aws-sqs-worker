@@ -24,7 +24,7 @@ def requests_retry_session(
 
 
 class Client:
-    def __init__(self, base_url, timeout, default_headers={}):
+    def __init__(self, base_url, timeout=(6, 30), default_headers={}):
         self.base_url = base_url
         self.default_headers = default_headers
         self.timeout = timeout
